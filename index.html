@@ -121,6 +121,13 @@ tbody tr:last-child td{border-bottom:none}
 /* Dual axis chart */
 .dual-chart-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px}
 .dual-chart-card h3{font-size:13px;font-weight:700;margin-bottom:12px}
+.brand-toggle { display:flex; gap:6px; margin-bottom:10px; }
+.brand-btn { padding:5px 14px; border:1px solid var(--border); border-radius:6px; cursor:pointer; font-size:13px; color:var(--text); background:var(--bg); transition:all .15s; }
+.brand-btn:hover { background:var(--surface2); }
+.brand-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+.brand-summary { font-size:12px; color:var(--muted); margin-bottom:10px; padding:8px 12px; background:var(--surface); border:1px solid var(--border); border-radius:6px; }
+.section-desc { font-size:13px; color:var(--muted); margin-bottom:14px; line-height:1.5; }
+.data-note { width:100%; font-size:11px; color:var(--muted); margin-top:6px; padding-top:6px; border-top:1px solid var(--border); }
 </style>
 </head>
 <body>
@@ -135,6 +142,7 @@ tbody tr:last-child td{border-bottom:none}
     <a href="#sec-overview" class="active">Overview</a>
     <a href="#sec-gap">Clicks vs Impressions</a>
     <a href="#sec-queries">Top Queries</a>
+    <a href="#sec-opportunities">CTR Opportunities</a>
     <a href="#sec-pages">Top Pages</a>
     <a href="#sec-posdist">Position Distribution</a>
     <a href="#sec-ctrpos">CTR by Position</a>
@@ -152,6 +160,7 @@ tbody tr:last-child td{border-bottom:none}
     </div>
     <span id="period-label"></span>
     <span id="as-of">Data as of March 23, 2026</span>
+    <div id="data-note" class="data-note"></div>
   </div>
 
   <div id="content">
@@ -163,22 +172,22 @@ tbody tr:last-child td{border-bottom:none}
         <div class="stat-card">
           <div class="stat-label">Total Clicks</div>
           <div class="stat-value" id="stat-clicks">—</div>
-          <div class="stat-yoy" id="yoy-clicks"></div>
+          <div id="yoy-clicks" style="color:var(--muted);font-size:11px;">YoY n/a — GSC only covers 16 months</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">Total Impressions</div>
           <div class="stat-value" id="stat-impr">—</div>
-          <div class="stat-yoy" id="yoy-impr"></div>
+          <div id="yoy-impr" style="color:var(--muted);font-size:11px;">YoY n/a — GSC only covers 16 months</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">Avg CTR</div>
           <div class="stat-value" id="stat-ctr">—</div>
-          <div class="stat-yoy" id="yoy-ctr"></div>
+          <div id="yoy-ctr" style="color:var(--muted);font-size:11px;">YoY n/a — GSC only covers 16 months</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Avg Position</div>
+          <div class="stat-label">Avg Position (lower is better)</div>
           <div class="stat-value" id="stat-pos">—</div>
-          <div class="stat-yoy" id="yoy-pos"></div>
+          <div id="yoy-pos" style="color:var(--muted);font-size:11px;">YoY n/a — GSC only covers 16 months</div>
         </div>
       </div>
       <div class="chart-grid-4">
@@ -195,7 +204,7 @@ tbody tr:last-child td{border-bottom:none}
           <div class="chart-wrap"><canvas id="ch-ctr"></canvas></div>
         </div>
         <div class="chart-card">
-          <h3>Avg Position</h3>
+          <h3>Avg Position (lower is better)</h3>
           <div class="chart-wrap"><canvas id="ch-pos"></canvas></div>
         </div>
       </div>
@@ -213,6 +222,12 @@ tbody tr:last-child td{border-bottom:none}
     <!-- Section 3: Top Queries -->
     <section id="sec-queries" class="section">
       <div class="section-title">Top Queries</div>
+      <div class="brand-toggle">
+        <button id="btn-all" class="brand-btn" onclick="setBrandFilter('all')">All Queries</button>
+        <button id="btn-nonbrand" class="brand-btn active" onclick="setBrandFilter('nonbrand')">Non-Branded</button>
+        <button id="btn-brand" class="brand-btn" onclick="setBrandFilter('brand')">Branded Only</button>
+      </div>
+      <div id="brand-summary" class="brand-summary"></div>
       <div class="table-controls">
         <input class="search-input" id="q-search" placeholder="Search queries..." oninput="renderQueries()">
         <span class="table-note" id="q-note">Showing top 100 for selected window</span>
@@ -223,16 +238,24 @@ tbody tr:last-child td{border-bottom:none}
             <tr>
               <th onclick="sortTable('queries',0,'str')">Query</th>
               <th onclick="sortTable('queries',1,'num')">Clicks</th>
-              <th onclick="sortTable('queries',2,'num')">Prior Year</th>
-              <th onclick="sortTable('queries',3,'num')">YoY %</th>
-              <th onclick="sortTable('queries',4,'num')">Impressions</th>
-              <th onclick="sortTable('queries',5,'num')">CTR</th>
-              <th onclick="sortTable('queries',6,'num')">Avg Pos</th>
+              <th onclick="sortTable('queries',2,'num')">Impressions</th>
+              <th onclick="sortTable('queries',3,'num')">CTR</th>
+              <th onclick="sortTable('queries',4,'num')">Avg Pos</th>
             </tr>
           </thead>
           <tbody id="tbody-queries"></tbody>
         </table>
       </div>
+    </section>
+
+    <!-- Section: CTR Opportunities -->
+    <section class="section" id="sec-opportunities">
+      <div class="section-title">CTR Opportunities</div>
+      <p class="section-desc">These queries rank on page 1–2 but have low click-through rates. Improving title tags and meta descriptions for these pages could significantly increase clicks with no change in rankings.</p>
+      <div class="table-controls">
+        <input type="text" id="search-opps" class="search-input" placeholder="Filter queries..." oninput="renderOppsTable()">
+      </div>
+      <div id="table-opps"></div>
     </section>
 
     <!-- Section 4: Top Pages -->
@@ -248,11 +271,9 @@ tbody tr:last-child td{border-bottom:none}
             <tr>
               <th onclick="sortTable('pages',0,'str')">URL</th>
               <th onclick="sortTable('pages',1,'num')">Clicks</th>
-              <th onclick="sortTable('pages',2,'num')">Prior Year</th>
-              <th onclick="sortTable('pages',3,'num')">YoY %</th>
-              <th onclick="sortTable('pages',4,'num')">Impressions</th>
-              <th onclick="sortTable('pages',5,'num')">CTR</th>
-              <th onclick="sortTable('pages',6,'num')">Avg Pos</th>
+              <th onclick="sortTable('pages',2,'num')">Impressions</th>
+              <th onclick="sortTable('pages',3,'num')">CTR</th>
+              <th onclick="sortTable('pages',4,'num')">Avg Pos</th>
             </tr>
           </thead>
           <tbody id="tbody-pages"></tbody>
@@ -298,11 +319,9 @@ tbody tr:last-child td{border-bottom:none}
             <tr>
               <th onclick="sortTable('countries',0,'str')">Country</th>
               <th onclick="sortTable('countries',1,'num')">Clicks</th>
-              <th onclick="sortTable('countries',2,'num')">Prior Year</th>
-              <th onclick="sortTable('countries',3,'num')">YoY %</th>
-              <th onclick="sortTable('countries',4,'num')">Impressions</th>
-              <th onclick="sortTable('countries',5,'num')">CTR</th>
-              <th onclick="sortTable('countries',6,'num')">Avg Pos</th>
+              <th onclick="sortTable('countries',2,'num')">Impressions</th>
+              <th onclick="sortTable('countries',3,'num')">CTR</th>
+              <th onclick="sortTable('countries',4,'num')">Avg Pos</th>
             </tr>
           </thead>
           <tbody id="tbody-countries"></tbody>
@@ -671,14 +690,11 @@ function sortData(data, col, dir) {
   return [...data].sort((a,b) => {
     let av, bv;
     switch(col) {
-      case 0: av=a.key;     bv=b.key;     break;
-      case 1: av=a.clicks;  bv=b.clicks;  break;
-      case 2: av=a.clicks_py; bv=b.clicks_py; break;
-      case 3: av= a.clicks_py>0?((a.clicks-a.clicks_py)/a.clicks_py):0;
-              bv= b.clicks_py>0?((b.clicks-b.clicks_py)/b.clicks_py):0; break;
-      case 4: av=a.impr;    bv=b.impr;    break;
-      case 5: av=a.ctr;     bv=b.ctr;     break;
-      case 6: av=a.pos;     bv=b.pos;     break;
+      case 0: av=a.key;    bv=b.key;    break;
+      case 1: av=a.clicks; bv=b.clicks; break;
+      case 2: av=a.impr;   bv=b.impr;   break;
+      case 3: av=a.ctr;    bv=b.ctr;    break;
+      case 4: av=a.pos;    bv=b.pos;    break;
       default: av=0; bv=0;
     }
     if(typeof av==='string') return dir==='asc'?av.localeCompare(bv):bv.localeCompare(av);
@@ -697,12 +713,9 @@ function renderTable(tbodyId, data, rowBuilder) {
 }
 
 function queryRowBuilder(r) {
-  const yoy = fmtYoy(r.clicks, r.clicks_py);
   return `
     <td style="max-width:320px;overflow:hidden;text-overflow:ellipsis">${escHtml(r.key)}</td>
     <td>${fmtFull(r.clicks)}</td>
-    <td>${fmtFull(r.clicks_py)||'—'}</td>
-    <td>${yoy.html}</td>
     <td>${fmtFull(r.impr)}</td>
     <td>${fmtCtr(r.ctr)}</td>
     <td>${fmtPos(r.pos)}</td>
@@ -710,7 +723,6 @@ function queryRowBuilder(r) {
 }
 
 function pageRowBuilder(r) {
-  const yoy = fmtYoy(r.clicks, r.clicks_py);
   const url = r.key || '/';
   const href = url.startsWith('/') ? 'https://www.visme.co'+url : url;
   const disp = url.length>60 ? url.slice(0,57)+'…' : url;
@@ -719,8 +731,6 @@ function pageRowBuilder(r) {
       <a href="${escHtml(href)}" target="_blank" rel="noopener">${escHtml(disp)}</a>
     </td>
     <td>${fmtFull(r.clicks)}</td>
-    <td>${fmtFull(r.clicks_py)||'—'}</td>
-    <td>${yoy.html}</td>
     <td>${fmtFull(r.impr)}</td>
     <td>${fmtCtr(r.ctr)}</td>
     <td>${fmtPos(r.pos)}</td>
@@ -728,13 +738,10 @@ function pageRowBuilder(r) {
 }
 
 function countryRowBuilder(r) {
-  const yoy = fmtYoy(r.clicks, r.clicks_py);
   const name = r.key ? r.key.charAt(0).toUpperCase()+r.key.slice(1).toLowerCase() : '—';
   return `
     <td>${escHtml(name)}</td>
     <td>${fmtFull(r.clicks)}</td>
-    <td>${fmtFull(r.clicks_py)||'—'}</td>
-    <td>${yoy.html}</td>
     <td>${fmtFull(r.impr)}</td>
     <td>${fmtCtr(r.ctr)}</td>
     <td>${fmtPos(r.pos)}</td>
@@ -745,10 +752,37 @@ function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+let brandFilter = 'nonbrand'; // default to non-branded
+
+function setBrandFilter(f) {
+  brandFilter = f;
+  document.querySelectorAll('.brand-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('btn-' + (f === 'all' ? 'all' : f === 'nonbrand' ? 'nonbrand' : 'brand')).classList.add('active');
+  renderQueries();
+}
+
+function isBranded(q) {
+  return q.toLowerCase().includes('visme');
+}
+
 function renderQueries() {
   const q = document.getElementById('q-search').value.toLowerCase();
   let data = getQueryData();
   if(q) data = data.filter(r => r.key.toLowerCase().includes(q));
+
+  // Brand filter
+  const allRows = data;
+  if (brandFilter === 'brand') data = data.filter(r => isBranded(r.key));
+  else if (brandFilter === 'nonbrand') data = data.filter(r => !isBranded(r.key));
+
+  // Update brand summary
+  const brandedClicks = allRows.filter(r => isBranded(r.key)).reduce((a,r) => a + r.clicks, 0);
+  const nonBrandedClicks = allRows.filter(r => !isBranded(r.key)).reduce((a,r) => a + r.clicks, 0);
+  const total = brandedClicks + nonBrandedClicks;
+  const nbShare = total > 0 ? (nonBrandedClicks/total*100).toFixed(1) : '0';
+  document.getElementById('brand-summary').innerHTML =
+    `Branded clicks: <strong>${brandedClicks.toLocaleString()}</strong> &nbsp;|&nbsp; Non-branded clicks: <strong>${nonBrandedClicks.toLocaleString()}</strong> &nbsp;|&nbsp; Non-branded share: <strong>${nbShare}%</strong>`;
+
   const ss = sortState.queries;
   data = sortData(data, ss.col, ss.dir);
   renderTable('tbody-queries', data.slice(0,100), queryRowBuilder);
@@ -822,6 +856,42 @@ function setWindow(n) {
   updateAll();
 }
 
+function renderOppsTable() {
+  const allRows = getQueryData();
+  const searchVal = (document.getElementById('search-opps')?.value || '').toLowerCase();
+
+  // Filter: impressions >= 5000, CTR <= 3%, position <= 20
+  let rows = allRows.filter(r =>
+    r.impr >= 5000 &&
+    r.ctr <= 0.03 &&
+    r.pos <= 20 &&
+    (searchVal === '' || r.key.toLowerCase().includes(searchVal))
+  );
+
+  // Opportunity score = impressions * (0.03 - CTR)
+  rows = rows.map(r => ({ ...r, score: r.impr * (0.03 - r.ctr) }));
+  rows.sort((a, b) => b.score - a.score);
+
+  if (!rows.length) {
+    document.getElementById('table-opps').innerHTML = '<div class="no-data">No opportunities found matching criteria</div>';
+    return;
+  }
+
+  const headers = ['Query', 'Impressions', 'Clicks', 'CTR', 'Avg Position', 'Opportunity Score'];
+  let th = headers.map(h => `<th>${h}</th>`).join('');
+  let tb = rows.map(r => `<tr>
+    <td>${escHtml(r.key)}</td>
+    <td class="num">${r.impr.toLocaleString()}</td>
+    <td class="num">${r.clicks.toLocaleString()}</td>
+    <td class="num">${(r.ctr*100).toFixed(2)}%</td>
+    <td class="num">${r.pos.toFixed(1)}</td>
+    <td class="num">${Math.round(r.score).toLocaleString()}</td>
+  </tr>`).join('');
+
+  document.getElementById('table-opps').innerHTML =
+    `<table><thead><tr>${th}</tr></thead><tbody>${tb}</tbody></table>`;
+}
+
 function updateAll() {
   const {cur, prior} = getWindows(lookback);
 
@@ -857,6 +927,7 @@ function updateAll() {
   renderQueries();
   renderPages();
   renderCountries();
+  renderOppsTable();
 }
 
 // ── Sidebar active link on scroll ──────────────────────────────────────────────
@@ -879,6 +950,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initCharts();
   renderCtrTable();
   updateAll();
+  document.getElementById('data-note').innerHTML =
+    `GSC data: <strong>${D.startDate}</strong> to <strong>${D.endDate}</strong>. YoY comparisons not available — data does not extend back 12+ months for most selected windows.`;
 });
 </script>
 </body>
